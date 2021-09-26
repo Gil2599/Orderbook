@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="markets_array">
+        <item>BTC-USDC</item>
+        <item>ETH-BTC</item>
+    </string-array>
+</resources>

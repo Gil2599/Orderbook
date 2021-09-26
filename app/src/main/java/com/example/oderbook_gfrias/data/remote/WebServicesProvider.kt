@@ -1,12 +1,13 @@
 package com.example.oderbook_gfrias.data.remote
 
+import com.example.oderbook_gfrias.data.model.CoinbaseRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
 
-class WebServicesProvider {
+class WebServicesProvider(marketRequest: CoinbaseRequest) {
 
     private var _webSocket: WebSocket? = null
 
@@ -14,7 +15,7 @@ class WebServicesProvider {
     private val request: Request = Request.Builder().url("wss://ws-feed.pro.coinbase.com").build()
 
     @ExperimentalCoroutinesApi
-    private var _webSocketListener = CoinbaseWebSocketListener()
+    private var _webSocketListener = CoinbaseWebSocketListener(marketRequest)
 
     @ExperimentalCoroutinesApi
     fun startSocket(): Channel<CoinbaseWebSocketListener.SocketUpdate> =
@@ -22,10 +23,8 @@ class WebServicesProvider {
         with(_webSocketListener) {
 
             startSocket(this)
-
             this@with.socketEventChannel
         }
-
 
     @ExperimentalCoroutinesApi
     fun startSocket(webSocketListener: CoinbaseWebSocketListener) {
@@ -41,7 +40,6 @@ class WebServicesProvider {
             _webSocket?.close(NORMAL_CLOSURE_STATUS, null)
             _webSocket = null
             _webSocketListener.socketEventChannel.close()
-            //_webSocketListener = null
         } catch (ex: Exception) {
         }
     }

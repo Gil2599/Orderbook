@@ -1,4 +1,4 @@
-package com.example.oderbook_gfrias.data.remote.dto
+package com.example.oderbook_gfrias.data.model
 
 data class CoinbaseRequest(
     val channels: List<Any>,

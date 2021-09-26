@@ -1,7 +1,7 @@
 package com.example.oderbook_gfrias.data.remote
 
 import android.util.Log
-import com.example.oderbook_gfrias.data.remote.dto.CoinbaseRequest
+import com.example.oderbook_gfrias.data.model.CoinbaseRequest
 import okio.ByteString
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,22 +11,27 @@ import kotlinx.coroutines.launch
 import okhttp3.*
 
 @ExperimentalCoroutinesApi
-class CoinbaseWebSocketListener: WebSocketListener() {
+class CoinbaseWebSocketListener(marketRequest: CoinbaseRequest): WebSocketListener() {
+
+    private var requestMarket: CoinbaseRequest = marketRequest
 
     val socketEventChannel: Channel<SocketUpdate> = Channel()
 
     private val GSON = GsonBuilder().setPrettyPrinting().create()
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
-        //Log.e("Message", toJSON())
         webSocket.send(toJSON())
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Log.e("Message", text)
         GlobalScope.launch {
-            socketEventChannel.send(SocketUpdate(text))
+
+            try {socketEventChannel.send(SocketUpdate(text))}
+            catch (ex: java.lang.Exception){
+                Log.e("Error", "Socket Closed")
+            }
         }
+
     }
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -35,7 +40,9 @@ class CoinbaseWebSocketListener: WebSocketListener() {
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         GlobalScope.launch {
-            socketEventChannel.send(SocketUpdate(exception = SocketAbortedException()))
+            try {socketEventChannel.send(SocketUpdate(exception = SocketAbortedException()))}
+            catch (ex: java.lang.Exception){
+                Log.e("Error", "Socket Closed")}
         }
         webSocket.close(NORMAL_CLOSURE_STATUS, null)
         socketEventChannel.close()
@@ -51,30 +58,15 @@ class CoinbaseWebSocketListener: WebSocketListener() {
 
     class SocketAbortedException : Exception()
 
+
     private fun toJSON(): String {
 
-        val request = CoinbaseRequest(
-            listOf("level2"),
-            listOf("BTC-USDC", "ETH_BTC"),
-            "subscribe"
-        )
-
-        val fullRequest = GSON.toJson(request, request.javaClass)
+        val fullRequest = GSON.toJson(requestMarket, requestMarket.javaClass)
 
         Log.e("Test", fullRequest)
 
         return fullRequest
     }
-
-    /*fun start() {
-        val request: Request = Request.Builder().url("wss://ws-feed.pro.coinbase.com").build()
-        val listener = CoinbaseWebSocketListener()
-
-        val wb: WebSocket = client.newWebSocket(request, listener)
-
-        client.dispatcher().executorService().shutdown()
-
-    }*/
 
     data class SocketUpdate(
         val text: String? = null,
