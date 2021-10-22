@@ -3,6 +3,7 @@ package com.example.oderbook_gfrias.data.remote
 import com.example.oderbook_gfrias.data.model.CoinbaseRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -18,7 +19,7 @@ class WebServicesProvider(marketRequest: CoinbaseRequest) {
     private var _webSocketListener = CoinbaseWebSocketListener(marketRequest)
 
     @ExperimentalCoroutinesApi
-    fun startSocket(): Channel<CoinbaseWebSocketListener.SocketUpdate> =
+    fun startSocket(): MutableSharedFlow<CoinbaseWebSocketListener.SocketUpdate> =
 
         with(_webSocketListener) {
 
@@ -31,7 +32,7 @@ class WebServicesProvider(marketRequest: CoinbaseRequest) {
         _webSocketListener = webSocketListener
 
         _webSocket = client.newWebSocket(request, webSocketListener)
-        client.dispatcher().executorService().shutdown()
+        client.dispatcher.executorService.shutdown()
     }
 
     @ExperimentalCoroutinesApi
@@ -39,7 +40,7 @@ class WebServicesProvider(marketRequest: CoinbaseRequest) {
         try {
             _webSocket?.close(NORMAL_CLOSURE_STATUS, null)
             _webSocket = null
-            _webSocketListener.socketEventChannel.close()
+            //_webSocketListener.socketEventChannel.close()
         } catch (ex: Exception) {
         }
     }

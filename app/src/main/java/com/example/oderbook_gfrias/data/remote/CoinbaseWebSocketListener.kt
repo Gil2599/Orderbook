@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import okhttp3.*
 
@@ -15,7 +16,7 @@ class CoinbaseWebSocketListener(marketRequest: CoinbaseRequest): WebSocketListen
 
     private var requestMarket: CoinbaseRequest = marketRequest
 
-    val socketEventChannel: Channel<SocketUpdate> = Channel()
+    val socketEventChannel = MutableSharedFlow<SocketUpdate>()
 
     private val GSON = GsonBuilder().setPrettyPrinting().create()
 
@@ -26,7 +27,7 @@ class CoinbaseWebSocketListener(marketRequest: CoinbaseRequest): WebSocketListen
     override fun onMessage(webSocket: WebSocket, text: String) {
         GlobalScope.launch {
 
-            try {socketEventChannel.send(SocketUpdate(text))}
+            try {socketEventChannel.emit(SocketUpdate(text))}
             catch (ex: java.lang.Exception){
                 Log.e("Error", "Socket Closed")
             }
@@ -40,12 +41,12 @@ class CoinbaseWebSocketListener(marketRequest: CoinbaseRequest): WebSocketListen
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         GlobalScope.launch {
-            try {socketEventChannel.send(SocketUpdate(exception = SocketAbortedException()))}
+            try {socketEventChannel.emit(SocketUpdate(exception = SocketAbortedException()))}
             catch (ex: java.lang.Exception){
                 Log.e("Error", "Socket Closed")}
         }
         webSocket.close(NORMAL_CLOSURE_STATUS, null)
-        socketEventChannel.close()
+        //socketEventChannel.close()
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {

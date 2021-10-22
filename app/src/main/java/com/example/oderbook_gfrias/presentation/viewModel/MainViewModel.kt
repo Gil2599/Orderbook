@@ -10,6 +10,7 @@ import com.example.oderbook_gfrias.data.remote.dto.MarketUpdateDto
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 
 class MainViewModel (private val interactor: MainInteractor): ViewModel() {
@@ -48,7 +49,7 @@ class MainViewModel (private val interactor: MainInteractor): ViewModel() {
     fun subscribeToSocketEvents() {
         viewModelScope.launch {
             try {
-                interactor.startSocket().consumeEach {
+                interactor.startSocket().collect() {
 
                     if (it.exception == null) {
 
